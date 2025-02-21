@@ -6,6 +6,7 @@ from flask_session import Session
 
 import base64
 import json
+from pprint import pprint
 
 import app_config
 
@@ -27,12 +28,13 @@ auth = identity.web.Auth(
     client_credential=app.config["CLIENT_SECRET"],
 )
 
-
 @app.route("/login")
 def login():
+
     redirect_url = url_for("auth_response", _external=True)
     if(app.config.get("REDIRECT_ROOT_URL") is not None):
         redirect_url = f"{app.config.get('REDIRECT_ROOT_URL').strip('/')}/{app.config.get('REDIRECT_PATH').strip('/')}"
+
     print(auth.log_in(
         scopes=app_config.SCOPE, # Have user consent to scopes during log-in
         redirect_uri=redirect_url, # Optional. If present, this absolute URL must match your app's redirect_uri registered in Azure Portal
@@ -45,13 +47,10 @@ def login():
 
 @app.route(app_config.REDIRECT_PATH)
 def auth_response():
-
-    token = auth.get_token_for_user(app_config.SCOPE)
-    token_parts = token['access_token'].split('.')
-    decoded_payload = base64.urlsafe_b64decode(token_parts[1] + '==')
-    parsed_payload = json.loads(decoded_payload)
-
     result = auth.complete_log_in(request.args)
+    print(f"auth.complete_log_in:")
+    pprint(result)
+
     if "error" in result:
         return render_template("auth_error.html", result=result)
     return redirect(url_for("index"))
@@ -91,10 +90,6 @@ def call_downstream_api():
     token_parts = token['access_token'].split('.')
     decoded_payload = base64.urlsafe_b64decode(token_parts[1] + '==')
     parsed_payload = json.loads(decoded_payload)
-
-    # Pretty print the JSON
-    # pretty_json = json.dumps(parsed_payload, indent=4)
-    # print(pretty_json)
 
     return render_template('display.html', result=parsed_payload)
 
