@@ -10,7 +10,7 @@ AUTHORITY = f"https://login.microsoftonline.com/{os.getenv('TENANT_ID', 'common'
 
 REDIRECT_ROOT_URL = os.getenv('REDIRECT_ROOT_URL')
 
-REDIRECT_PATH = os.getenv('REDIRECT_PATH')  # Used for forming an absolute URL to your redirect URI.
+REDIRECT_PATH = os.getenv('REDIRECT_PATH', "/api/callback")  # Used for forming an absolute URL to your redirect URI.
 # The absolute URL must match the redirect URI you set
 # in the app's registration in the Azure portal.
 

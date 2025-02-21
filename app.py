@@ -4,6 +4,9 @@ import requests
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_session import Session
 
+import base64
+import json
+
 import app_config
 
 app = Flask(__name__)
@@ -30,7 +33,10 @@ def login():
     redirect_url = url_for("auth_response", _external=True)
     if(app.config.get("REDIRECT_ROOT_URL") is not None):
         redirect_url = f"{app.config.get('REDIRECT_ROOT_URL').strip('/')}/{app.config.get('REDIRECT_PATH').strip('/')}"
-    print(f"[{redirect_url}]")
+    print(auth.log_in(
+        scopes=app_config.SCOPE, # Have user consent to scopes during log-in
+        redirect_uri=redirect_url, # Optional. If present, this absolute URL must match your app's redirect_uri registered in Azure Portal
+    ))
     return render_template("login.html", version=identity.__version__, **auth.log_in(
         scopes=app_config.SCOPE, # Have user consent to scopes during log-in
         redirect_uri=redirect_url, # Optional. If present, this absolute URL must match your app's redirect_uri registered in Azure Portal
@@ -72,7 +78,18 @@ def call_downstream_api():
         headers={'Authorization': 'Bearer ' + token['access_token']},
         timeout=30,
     ).json()
-    print(f"access_token: {token['access_token']}")
+
+    print(f"Authorization: Bearer {token['access_token']}")
+
+    # Decode the JWT token
+    token_parts = token['access_token'].split('.')
+    decoded_payload = base64.urlsafe_b64decode(token_parts[1] + '==')
+    parsed_payload = json.loads(decoded_payload)
+
+    # Pretty print the JSON
+    pretty_json = json.dumps(parsed_payload, indent=4)
+    print(pretty_json)
+
     return render_template('display.html', result=api_result)
 
 
