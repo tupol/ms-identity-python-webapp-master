@@ -45,6 +45,12 @@ def login():
 
 @app.route(app_config.REDIRECT_PATH)
 def auth_response():
+
+    token = auth.get_token_for_user(app_config.SCOPE)
+    token_parts = token['access_token'].split('.')
+    decoded_payload = base64.urlsafe_b64decode(token_parts[1] + '==')
+    parsed_payload = json.loads(decoded_payload)
+
     result = auth.complete_log_in(request.args)
     if "error" in result:
         return render_template("auth_error.html", result=result)
@@ -87,10 +93,10 @@ def call_downstream_api():
     parsed_payload = json.loads(decoded_payload)
 
     # Pretty print the JSON
-    pretty_json = json.dumps(parsed_payload, indent=4)
-    print(pretty_json)
+    # pretty_json = json.dumps(parsed_payload, indent=4)
+    # print(pretty_json)
 
-    return render_template('display.html', result=api_result)
+    return render_template('display.html', result=parsed_payload)
 
 
 if __name__ == "__main__":
